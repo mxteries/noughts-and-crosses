@@ -327,6 +327,9 @@ public class runTicTacToe {
 			if(turn==1)
 			{
 				positionTicTacToe player1NextMove = ai1.myAIAlgorithm(board,1); //1 stands for player 1
+				System.out.print("AI move is: ");
+				player1NextMove.debugPrintPosition();
+
 				if(makeMove(player1NextMove,1,board))
 					turn = 2;
 			}
@@ -342,7 +345,8 @@ public class runTicTacToe {
 				System.out.println("Error!");
 			}
 		}
-		
+
+		System.out.println();
 			//game is ended
 		if(result==1)
 		{
@@ -371,13 +375,25 @@ public class runTicTacToe {
 	}
 	
 
-	
-	//run the game once
+	public void debugShowBoardConfig() {
+		int count = 0;
+		for (positionTicTacToe pos: board) {
+			int index = pos.x*16+pos.y*4+pos.z;
+			board.get(index).state = 1;
+			if (++count == 5) {
+				break;
+			}
+		}
+		printBoardTicTacToe(board);
 
-	public static void main(String[] args) {		
+	}
+
+	public static void main(String[] args) {
 
 		//run game loop
 		runTicTacToe rttt = new runTicTacToe();
+
+		//rttt.debugShowBoardConfig();
 		rttt.run();
 	}
 }

@@ -11,6 +11,12 @@ public class positionTicTacToe {
 		System.out.println("state: "+state);
 		
 	}
+
+	public void debugPrintPosition()
+	{
+		System.out.println("("+x+","+y+","+z+")");
+
+	}
 	
 	positionTicTacToe(int setX,int setY,int setZ,int setState)
 	{
