@@ -3,11 +3,53 @@ import java.util.*;
 public class aiTicTacToe {
 
 	public int player; //1 for player 1 and 2 for player 2
+	private List<List<positionTicTacToe>> allWinningLines = new ArrayList<>(); 
 	private int getStateOfPositionFromBoard(positionTicTacToe position, List<positionTicTacToe> board)
 	{
 		//a helper function to get state of a certain position in the Tic-Tac-Toe board by given position TicTacToe
 		int index = position.x*16+position.y*4+position.z;
 		return board.get(index).state;
+	}
+
+	// isEnded from runTicTacToe, modified
+    // Statically evaluate this board for wins for player 1 or 2
+	// return "inf" if p1 won, "-inf" if p2 won, 0 if draw
+	// if no terminal state (no win/draw) , return -1
+	private int checkTerminal(List<positionTicTacToe> board) {
+		//brute-force
+		for(int i=0;i<allWinningLines.size();i++) {
+			
+			positionTicTacToe p0 = allWinningLines.get(i).get(0);
+			positionTicTacToe p1 = allWinningLines.get(i).get(1);
+			positionTicTacToe p2 = allWinningLines.get(i).get(2);
+			positionTicTacToe p3 = allWinningLines.get(i).get(3);
+			
+			int state0 = getStateOfPositionFromBoard(p0,board);
+			int state1 = getStateOfPositionFromBoard(p1,board);
+			int state2 = getStateOfPositionFromBoard(p2,board);
+			int state3 = getStateOfPositionFromBoard(p3,board);
+			
+			//if they have the same state (marked by same player) and they are not all marked.
+			if(state0 == state1 && state1 == state2 && state2 == state3 && state0!=0) {
+				System.out.println("Found a win for state: " + state0);
+				if (state0 == 1) {
+					// p1 has won!
+					return Integer.MAX_VALUE;
+				} else if(state0 == 2) {
+					// p2 has won!
+					return Integer.MIN_VALUE; 
+				}
+			}
+		}
+		for(int i=0;i<board.size();i++) {
+			// if there's still unmarked positions
+			if(board.get(i).state==0)
+			{
+				//game is not ended, continue
+				return -1;
+			}
+		}
+		return 0; //call it a draw
 	}
 
 	// copied from runTicTacToe.java
@@ -32,6 +74,7 @@ public class aiTicTacToe {
 	// statically evaluate the board position
 	// simple idea: go through each board point and add 1 for every adjacent x and subtract 1 for every adjacent o (including position itself)
 	private int evaluate(List<positionTicTacToe> position) {
+		// else, determine whether the position is better for p1 or p2
 
 		return 10;
 		//Random rand = new Random();
@@ -48,13 +91,14 @@ public class aiTicTacToe {
 	}
 	
 	private int minimax(List<positionTicTacToe> modifiedBoard, int depth, int alpha, int beta, boolean maximizingPlayer) {
+		int terminalScore = checkTerminal(modifiedBoard);
+		if (terminalScore != -1) {  // -1 means no terminal position
+			return terminalScore;
+		}
 		if (depth == 0) {
 			return evaluate(modifiedBoard);
 		}
-		//if (...) {// check if board is in terminal position
-		//	evaluate(actualBoard);
-		//}
-		// make a copy of the board each call
+			
 		int maxEval = Integer.MIN_VALUE;
 		int minEval = Integer.MAX_VALUE;
 
@@ -87,6 +131,7 @@ public class aiTicTacToe {
 	}
 
 	// should not get called with a depth of 0
+	// there's a problem with how my wrapper and minimax interact -- why is it always player2??
 	private positionTicTacToe minimaxWrapper(List<positionTicTacToe> actualBoard, int depth, int alpha, int beta, boolean maximizingPlayer) {
 		// doesnt even need to check terminal pos
 
@@ -143,7 +188,7 @@ public class aiTicTacToe {
 		List<positionTicTacToe> minimaxBoard = deepCopy(board);
 		if (player == 1) {
 			// minimax(minimaxBoard, 0, Integer.MAX_VALUE, Integer.MIN_VALUE, true);
-			myNextMove = minimaxWrapper(minimaxBoard, 7, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+			myNextMove = minimaxWrapper(minimaxBoard, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 		} else {
 			do {
 				Random rand = new Random();
@@ -295,5 +340,6 @@ public class aiTicTacToe {
 	public aiTicTacToe(int setPlayer)
 	{
 		player = setPlayer;
+		allWinningLines = initializeWinningLines();
 	}
 }
