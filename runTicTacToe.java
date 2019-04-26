@@ -327,17 +327,26 @@ public class runTicTacToe {
 			if(turn==1)
 			{
 				positionTicTacToe player1NextMove = ai1.myAIAlgorithm(board,1); //1 stands for player 1
-				System.out.print("AI move is: ");
+				System.out.print("P1 move is: ");
 				player1NextMove.debugPrintPosition();
 
-				if(makeMove(player1NextMove,1,board))
+				if(makeMove(player1NextMove,1,board)) {
 					turn = 2;
+				}
+				else {
+					break;
+				}
 			}
 			else if(turn==2)
 			{
 				positionTicTacToe player2NextMove = ai2.myAIAlgorithm(board,2); //2 stands for player 2
-				if(makeMove(player2NextMove,2,board))
+				System.out.print("P2 move is: ");
+				player2NextMove.debugPrintPosition();
+				if(makeMove(player2NextMove,2,board)) {
 					turn = 1;
+				} else {
+					break;
+				}
 			}
 			else 
 			{
@@ -369,6 +378,7 @@ public class runTicTacToe {
 		else
 		{
 			//exception occurs, stop
+			printBoardTicTacToe(board);
 			System.out.println("Error!");
 		}
 		
@@ -379,10 +389,12 @@ public class runTicTacToe {
 		int count = 0;
 		for (positionTicTacToe pos: board) {
 			int index = pos.x*16+pos.y*4+pos.z;
-			board.get(index).state = 1;
-			if (++count == 5) {
-				break;
-			}
+			System.out.print("Position: ");
+			pos.printPosition();
+//			board.get(index).state = 1;
+//			if (++count == 5) {
+//				break;
+//			}
 		}
 		printBoardTicTacToe(board);
 
@@ -393,7 +405,7 @@ public class runTicTacToe {
 		//run game loop
 		runTicTacToe rttt = new runTicTacToe();
 
-		//rttt.debugShowBoardConfig();
+//		rttt.debugShowBoardConfig();
 		rttt.run();
 	}
 }

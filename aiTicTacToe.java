@@ -13,9 +13,13 @@ public class aiTicTacToe {
 
 	// isEnded from runTicTacToe, modified
     // Statically evaluate this board for wins for player 1 or 2
-	// return "inf" if p1 won, "-inf" if p2 won, 0 if draw
+	// return 100 if p1 won, -100 if p2 won, 0 if draw
 	// if no terminal state (no win/draw) , return -1
-	private int checkTerminal(List<positionTicTacToe> board) {
+	// player is the player's whose actual turn it is (never changed)
+	// checkTerminal prioritizes winning lines for player
+	private int checkTerminal(List<positionTicTacToe> board, int player) {
+	    boolean p1Win = false;
+	    boolean p2Win = false;
 		//brute-force
 		for(int i=0;i<allWinningLines.size();i++) {
 			
@@ -31,15 +35,29 @@ public class aiTicTacToe {
 			
 			//if they have the same state (marked by same player) and they are not all marked.
 			if(state0 == state1 && state1 == state2 && state2 == state3 && state0!=0) {
-				System.out.println("Found a win for state: " + state0);
 				if (state0 == 1) {
-					// p1 has won!
-					return Integer.MAX_VALUE;
+					if (player == 1) {
+						// The current player p1 has won, return immediately
+						return 100;
+					}
+					// else, note p1 has won, but finish checking for p2 first
+					p1Win = true;
 				} else if(state0 == 2) {
-					// p2 has won!
-					return Integer.MIN_VALUE; 
+					if (player == 2) {
+						// The current player p2 has won, return immediately
+						return -100;
+					}
+					// else, note p2 has won, but finish checking for p1 first
+					p2Win = true;
 				}
 			}
+		}
+
+		if (p1Win) {
+			return 100;
+		}
+		else if (p2Win) {
+			return -100;
 		}
 		for(int i=0;i<board.size();i++) {
 			// if there's still unmarked positions
@@ -65,20 +83,10 @@ public class aiTicTacToe {
 		return copiedBoard;
 	}
 
-/* lecture notes
-* because we have time limit: can use certain techniques
-* progresive deepening: analyze game situation up to d=1,d=2,... until time is up
-* look at lecture notes for suggestion of techniques
-*/
-
 	// statically evaluate the board position
-	// simple idea: go through each board point and add 1 for every adjacent x and subtract 1 for every adjacent o (including position itself)
+	// precondition: checkTerminal() was called before this, and it returned -1
 	private int evaluate(List<positionTicTacToe> position) {
-		// else, determine whether the position is better for p1 or p2
-
-		return 10;
-		//Random rand = new Random();
-		//return rand.nextInt(10) - 5;  // random num from -5 to 5
+        return 0;
 	}
 	private void markPosition(positionTicTacToe pos, List<positionTicTacToe> board, boolean maximizingPlayer) {
 		
@@ -90,13 +98,14 @@ public class aiTicTacToe {
 		board.get(index).state=player;
 	}
 	
-	private int minimax(List<positionTicTacToe> modifiedBoard, int depth, int alpha, int beta, boolean maximizingPlayer) {
-		int terminalScore = checkTerminal(modifiedBoard);
+	private int minimax(List<positionTicTacToe> modifiedBoard, int depth, int alpha, int beta, boolean maximizingPlayer, int player) {
+		int terminalScore = checkTerminal(modifiedBoard, player);
 		if (terminalScore != -1) {  // -1 means no terminal position
 			return terminalScore;
 		}
 		if (depth == 0) {
-			return evaluate(modifiedBoard);
+			int eval = evaluate(modifiedBoard);
+			return eval;
 		}
 			
 		int maxEval = Integer.MIN_VALUE;
@@ -109,7 +118,7 @@ public class aiTicTacToe {
 				markPosition(found, copiedBoard, maximizingPlayer);
 
 				// recursively call minimax on child position
-				int score = minimax(copiedBoard, depth - 1, alpha, beta, !maximizingPlayer);
+				int score = minimax(copiedBoard, depth - 1, alpha, beta, !maximizingPlayer, player);
 				if (maximizingPlayer) {
 					maxEval = Math.max(maxEval, score);
 					alpha = Math.max(alpha, score);
@@ -131,14 +140,16 @@ public class aiTicTacToe {
 	}
 
 	// should not get called with a depth of 0
-	// there's a problem with how my wrapper and minimax interact -- why is it always player2??
-	private positionTicTacToe minimaxWrapper(List<positionTicTacToe> actualBoard, int depth, int alpha, int beta, boolean maximizingPlayer) {
+	// player is the actual player whose turn it is (never changes)
+	private positionTicTacToe minimaxWrapper(List<positionTicTacToe> actualBoard, int depth, int alpha, int beta, boolean maximizingPlayer, int player) {
 		// doesnt even need to check terminal pos
 
 		int maxEval = Integer.MIN_VALUE;
 		int minEval = Integer.MAX_VALUE;
-		positionTicTacToe maxMove = new positionTicTacToe(0,0,0);
-		positionTicTacToe minMove = new positionTicTacToe(0,0,0);
+		positionTicTacToe maxMove = new positionTicTacToe(2,3,0);
+		positionTicTacToe minMove = new positionTicTacToe(2,3,0);
+		// if we can't find a move (aka check terminal returns that the other person wins in every move)
+		// then we need to pick one
 
 		// loop over all unmarked board positions
 		for (positionTicTacToe position: actualBoard) {
@@ -147,7 +158,7 @@ public class aiTicTacToe {
 				markPosition(position, copiedBoard, maximizingPlayer);
 
 				// recursively call minimax on child position
-				int score = minimax(copiedBoard, depth - 1, alpha, beta, !maximizingPlayer);
+				int score = minimax(copiedBoard, depth - 1, alpha, beta, !maximizingPlayer, player);
 				if (maximizingPlayer) {
 					if (score > maxEval) {
 						maxEval = score;
@@ -168,6 +179,7 @@ public class aiTicTacToe {
 			}
 
 		}
+
 		if (maximizingPlayer) {
 			return maxMove;
 		}
@@ -179,24 +191,27 @@ public class aiTicTacToe {
 	// chooses a move for p2 at random
 	public positionTicTacToe myAIAlgorithm(List<positionTicTacToe> board, int player)
 	{
-		//TODO: this is where you are going to implement your AI algorithm to win the game. The default is an AI randomly choose any available move.
-		// maybe f the tree, well just copy the board, then minimax that. then we just need a function to evaluate the position given a board
+		// note, if other other player has multiple win conditions and we have none, we've lost.
+		// so we may pick a move that doesn't even block any win conditions
 
+		// this also explains why 1-3-0 happens! P2 knows that they lose whatever move they make, because they can see
+		// depth moves into the future, and knows that they lose 100%
+        // moral: you will always beat the other ai as long (same evaluator) if you have more depth!!!!
 		positionTicTacToe myNextMove;
 
-		// copy board
-		List<positionTicTacToe> minimaxBoard = deepCopy(board);
 		if (player == 1) {
-			// minimax(minimaxBoard, 0, Integer.MAX_VALUE, Integer.MIN_VALUE, true);
-			myNextMove = minimaxWrapper(minimaxBoard, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+
+			myNextMove = minimaxWrapper(board, 4, Integer.MIN_VALUE, Integer.MAX_VALUE, true, player);
 		} else {
-			do {
-				Random rand = new Random();
-				int x = rand.nextInt(4);
-				int y = rand.nextInt(4);
-				int z = rand.nextInt(4);
-				myNextMove = new positionTicTacToe(x,y,z);
-			} while(getStateOfPositionFromBoard(myNextMove,board)!=0);
+			myNextMove = minimaxWrapper(board, 5, Integer.MIN_VALUE, Integer.MAX_VALUE, false, player);
+//
+//			do {
+//				Random rand = new Random();
+//				int x = rand.nextInt(4);
+//				int y = rand.nextInt(4);
+//				int z = rand.nextInt(4);
+//				myNextMove = new positionTicTacToe(x,y,z);
+//			} while(getStateOfPositionFromBoard(myNextMove,board)!=0);
 		}
 		return myNextMove;
 	}
